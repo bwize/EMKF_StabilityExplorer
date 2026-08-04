@@ -1,0 +1,302 @@
+calcite-shell {
+  height: 100%;
+}
+
+.map-view {
+  height: 100%;
+  width: 100%;
+}
+
+/* --- Header: Kauffman Foundation lockup + app title -------------------- */
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding-left: 1rem;
+}
+
+
+.brand-logo {
+  height: 34px;
+  width: auto;
+  display: block;
+}
+
+/* Brand Guidelines_042425.pdf, "Other usage": on a dark/colored background
+   the logo runs solid white rather than its print colors. brightness(0)
+   flattens every opaque pixel to black (alpha untouched), invert(1) flips
+   that to white — a transparent-PNG-safe way to get the sanctioned
+   dark-background treatment without a second exported asset. */
+:root.calcite-mode-dark .brand-logo {
+  filter: brightness(0) invert(1);
+}
+
+.brand-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--calcite-color-border-2);
+}
+
+/* --- Left panel: indicator picker + legend --------------------------- */
+
+.controls-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.5rem 1rem 1rem;
+}
+
+.indicator-picker {
+  display: flex;
+  width: 100%;
+}
+
+.indicator-picker calcite-select {
+  width: 100%;
+}
+
+.indicator-description {
+  margin: -0.5rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--calcite-color-text-2);
+}
+
+.data-status-notice {
+  margin-bottom: -0.25rem;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--calcite-color-border-3);
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-swatch {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+.legend-label {
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--calcite-color-text-1);
+}
+
+.legend-hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--calcite-color-text-3);
+}
+
+/* calcite-navigation's content-end slot sits flush against the shell's right
+   edge by default; this is the toggle's own breathing room from that edge. */
+.dark-mode-toggle {
+  align-items: center;
+  gap: 0.375rem;
+  padding-right: 1rem;
+}
+
+/* --- Right panel: tract detail ---------------------------------------- */
+
+.tract-panel {
+  height: 100%;
+}
+
+.tract-panel-empty .tract-panel-placeholder {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  color: var(--calcite-color-text-3);
+}
+
+.tract-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem 1rem;
+}
+
+/* Raw-count summary strip above the indicator groups. */
+.tract-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  border: 1px solid var(--calcite-color-border-3);
+  border-radius: 4px;
+  background: var(--calcite-color-border-3);
+  overflow: hidden;
+}
+
+.tract-summary-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.625rem 0.75rem;
+  background: var(--calcite-color-foreground-1);
+}
+
+.tract-summary-value {
+  font-size: 1.125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  color: var(--calcite-color-text-1);
+}
+
+.tract-summary-label {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--calcite-color-text-3);
+}
+
+.tract-panel-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  background: var(--calcite-color-foreground-2);
+  font-size: 0.8125rem;
+  color: var(--calcite-color-text-2);
+}
+
+.tract-panel-hint .flag-icon {
+  flex: none;
+  color: var(--calcite-color-status-danger);
+}
+
+/* Pulled-up list of every flagged indicator, above the grouped sections. The
+   count pill and the rows it introduces are one unit, held tighter than the
+   0.75rem rhythm of .tract-panel-body. */
+.flagged-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.flagged-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.flagged-summary .indicator-row {
+  border-bottom: none;
+  padding: 0.375rem 0.5rem;
+}
+
+.indicator-row-rank {
+  font-weight: 400;
+  font-size: 0.6875rem;
+  color: var(--calcite-color-text-3);
+}
+
+.indicator-row-group {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.6875rem;
+  color: var(--calcite-color-text-3);
+}
+
+/* The full indicator list. Separated from the flagged block above by a rule
+   and a wider gap than the panel's own rhythm, because the flagged rows are
+   repeated down here — without the break the two lists blur into one. */
+.indicator-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.375rem;
+  padding-top: 1rem;
+  border-top: 2px solid var(--calcite-color-border-2);
+}
+
+.indicator-sections-heading {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--calcite-color-text-2);
+}
+
+/* Indicator groups. A hairline subhead rather than a collapsible block —
+   see the note in TractPanel.jsx. Matches the uppercase caption treatment
+   already used by .tract-summary-label. */
+.indicator-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.indicator-section-heading {
+  margin: 0 0 0.125rem;
+  padding-bottom: 0.25rem;
+  /* Rule picks up a wash of the heading color so the two read as one unit;
+     the color itself is theme-paired in index.css. */
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--indicator-heading-color) 35%, var(--calcite-color-border-2));
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--indicator-heading-color);
+}
+
+.indicator-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.25rem;
+  border-bottom: 1px solid var(--calcite-color-border-3);
+  font-size: 0.8125rem;
+}
+
+.indicator-row:last-child {
+  border-bottom: none;
+}
+
+.indicator-row-label {
+  color: var(--calcite-color-text-1);
+}
+
+.indicator-row-value {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--calcite-color-text-1);
+}
+
+.indicator-row.is-flagged {
+  background: color-mix(in srgb, var(--calcite-color-status-danger) 10%, transparent);
+  border-radius: 4px;
+}
+
+.indicator-row.is-flagged .indicator-row-value {
+  color: var(--calcite-color-status-danger);
+}
+
+.indicator-row .flag-icon {
+  flex: none;
+  color: var(--calcite-color-status-danger);
+}
