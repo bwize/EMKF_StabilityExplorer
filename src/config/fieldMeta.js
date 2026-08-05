@@ -160,6 +160,18 @@ export const FIELD_META = {
     direction: "high",
     description: "Households receiving SNAP benefits or public cash assistance.",
   },
+  // Denominator is families *with children*, not all families — a tract full of
+  // empty-nesters shouldn't read as low single-parenthood just because most of
+  // its families have no kids to parent. The layer also carries the all-families
+  // and all-households versions (pct_fam_single_parent, pct_hh_single_parent);
+  // both dilute the signal with families this measure isn't about.
+  pct_single_parent_fam: {
+    label: "Single-Parent Families",
+    group: "Economic Security",
+    direction: "high",
+    description:
+      "Of families with children under 18, the share headed by one parent with no spouse present.",
+  },
 
   // --- Mobility: residential churn, then getting to work -------------------
   pct_renter_moved_recent: {
