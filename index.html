@@ -15,9 +15,36 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400;1,700&family=Public+Sans:wght@400;800&display=swap"
     />
+
+    <!-- No npm/build step (see README) — @arcgis/core and calcite-components
+         are loaded straight from Esri's CDN. Esri documents this ESM CDN path
+         as fine for calcite-components in production, but as testing/
+         prototyping-only (not tree-shaken, more HTTP requests) for
+         @arcgis/core itself; accepted trade-off for this low-traffic internal
+         page in exchange for zero npm dependencies. -->
+    <!-- esm.sh mirrors npm packages as real ES modules — used here only for
+         simple-statistics (Jenks natural-breaks in lib/classify.js), which
+         Esri's CDN has no reason to host. Pinned to the exact version the
+         npm lockfile had. -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@arcgis/core/": "https://js.arcgis.com/5.1/@arcgis/core/",
+          "simple-statistics": "https://esm.sh/simple-statistics@7.9.3"
+        }
+      }
+    </script>
+    <!-- Unified bundle: registers every calcite-* custom element (no
+         defineCustomElements() call needed) and exposes the Core API that
+         the import map above resolves against. -->
+    <script type="module" src="https://js.arcgis.com/5.1"></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/5.1/@arcgis/core/assets/esri/themes/light/main.css" />
+
+    <link rel="stylesheet" href="/src/index.css" />
+    <link rel="stylesheet" href="/src/App.css" />
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <script type="module" src="/src/main.js"></script>
   </body>
 </html>

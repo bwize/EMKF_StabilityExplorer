@@ -1,6 +1,6 @@
 # Stability Tract Explorer
 
-A React + ArcGIS Maps SDK app for exploring the KC-region ACS tract
+A vanilla-JS + ArcGIS Maps SDK app for exploring the KC-region ACS tract
 indicators computed by `Code/01_acs_tracts.py` in the Stability project.
 Pick any RATES indicator from the dropdown to choropleth it (natural-breaks
 classification); click a tract to see every indicator for it, with the ones
@@ -23,43 +23,89 @@ purpose, independent of brand.
 The real logo lives in `src/assets/brand/`:
 
 - `EMKF_Stacked_RGB.png` — the preferred lockup (icon + wordmark), used in
-  `Header.jsx`. In dark mode it's flipped to solid white via a CSS
+  `components/header.js`. In dark mode it's flipped to solid white via a CSS
   `brightness(0) invert(1)` filter rather than a second exported asset —
   matches the "other usage" dark-background treatment in the brand PDF.
 - `emkf-icon.png` — just the "K" mark, cropped programmatically from the
   file above (bounding-box detection on the alpha channel, not hand-redrawn)
-  for use as the favicon (`public/favicon-kauffman.png`).
+  for use as the favicon (`favicon-kauffman.png`, project root).
 
-## Stack
+## Stack — no npm, no build step
 
-- **Vite + React 19** (plain JS, not TypeScript)
-- **`@arcgis/core`** (v5, npm/ESM build) — imperative Map/MapView/FeatureLayer, not the `<arcgis-map>` web components
-- **`@esri/calcite-components`** (v5, Lit-based) — used as raw custom elements (`<calcite-shell>`, `<calcite-select>`, ...). React 19 doesn't need the old `@esri/calcite-components-react` wrapper package, so it isn't installed — see `src/hooks/useCalciteEvent.js` for why Calcite's custom events still need a manual `addEventListener`.
-- **`simple-statistics`** for Jenks natural-breaks classification
+This app is plain static files: `index.html` + hand-written ES modules,
+served as-is. There is no `package.json`, no `node_modules`, no bundler, and
+nothing to `npm install`. Everything third-party loads from a CDN at
+runtime, wired together with a browser-native `<script type="importmap">`
+in `index.html`:
 
-## Setup
+- **`@arcgis/core`** (v5) — loaded from Esri's ESM CDN (`js.arcgis.com/5.1`).
+  Imperative Map/MapView/FeatureLayer, not the `<arcgis-map>` web
+  components. **Caveat:** Esri's own docs describe this ESM CDN path as
+  intended for testing/prototyping, not production — it isn't tree-shaken
+  and costs more HTTP requests than a bundled build. Accepted deliberately
+  here: this is a low-traffic internal single-page tool, and the trade-off
+  is page weight, not correctness or security. If traffic or performance
+  ever becomes a real concern, the fix is reintroducing a bundler (Vite,
+  esbuild, Rollup) for `@arcgis/core` specifically — nothing else in this
+  app depends on one.
+- **`@esri/calcite-components`** (v5, Lit-based) — also from
+  `js.arcgis.com/5.1`, used as raw custom elements (`<calcite-shell>`,
+  `<calcite-select>`, ...). Unlike `@arcgis/core`, Esri documents this CDN
+  path as fully supported for production. The script tag self-registers
+  every `calcite-*` element; no `defineCustomElements()` call needed.
+- **`simple-statistics`** — just the `jenks()` function, for natural-breaks
+  classification (`lib/classify.js`). Esri doesn't host this, so it's
+  mapped to `esm.sh` instead (a CDN that mirrors npm packages as real ES
+  modules), pinned to an exact version in the import map.
 
-Node.js wasn't installed on this machine, so a portable copy was placed at
-`C:\Users\brian\.local\node` and added to your **User** PATH — open a *new*
-terminal for `node`/`npm` to be on PATH automatically. If a terminal still
-doesn't see them, run:
+Everything else — all app code in `src/` — is authored directly as ES
+modules with **no framework**. There was a React version of this app
+before; it's gone, along with the JSX build step it required. See
+"Rendering, without a framework" below for how the UI updates without one.
 
-```powershell
-$env:PATH = "C:\Users\brian\.local\node;$env:PATH"
-```
+## Running it
 
-Then, from this folder:
+Any static file server works — there's nothing to build first. From this
+folder:
 
 ```bash
-npm install
-npm run dev      # http://localhost:5173
-npm run build    # production build -> dist/
+python -m http.server 8000
 ```
+
+then open `http://localhost:8000/`. (Node's `npx serve` would also work,
+but that pulls from npm, which defeats the point — Python ships with most
+systems and involves no package manager at all. A code editor's built-in
+"Live Server" style extension works too.)
+
+**Deploying** is the same idea: copy this folder's contents to any static
+host (S3, GitHub Pages, an internal file share behind a web server, ...).
+There's no build artifact to produce — what's in `src/` and `index.html` is
+what ships.
+
+## Rendering, without a framework
+
+`src/dom.js` exports a small `el(tag, props, ...children)` helper — a
+stand-in for `React.createElement`, but with no virtual DOM: it builds real
+DOM nodes immediately. `src/state.js` is a plain object plus a `setState()`
+that re-runs a single `render()` callback. `src/main.js` wires the two
+together: it builds the static `<calcite-shell>` layout once, then on every
+`setState()` call, `render()` recomputes derived data (active fields, field
+stats, the map renderer, ...) and replaces the DOM subtrees that depend on
+it — the controls panel body and the tract detail panel — the same way the
+old React version's component tree re-rendered on state changes, just
+without a diffing algorithm underneath. The map itself
+(`src/mapView.js`) is created exactly once and never torn down, matching
+the mount-once `useEffect` the old `MapView.jsx` used.
 
 ## Project structure
 
 ```
+index.html            # CDN script tags + import map, CSS links, mount point
 src/
+  main.js              # bootstraps the shell, owns state -> render wiring
+  state.js              # plain state object + setState()/subscribe()
+  dom.js                  # el() hyperscript helper (React.createElement stand-in)
+  mapView.js                # owns the Map/MapView/FeatureLayer lifecycle + click handling
   config/
     appConfig.js     # FeatureServer URL, county lookup, class count, flag threshold
     fieldMeta.js      # <-- the file you'll actually edit: label/group/direction per indicator
@@ -70,9 +116,7 @@ src/
     colorRamps.js         # choropleth color ramps (validated with the dataviz skill)
     layerFields.js         # intersects fieldMeta.js with whatever fields the live layer actually has
   components/
-    MapView.jsx        # owns the Map/MapView/FeatureLayer lifecycle + click handling
-    IndicatorPicker.jsx, Legend.jsx, TractPanel.jsx, Header.jsx, DataStatusNotice.jsx
-  App.jsx               # data loading + state; wires everything together
+    indicatorPicker.js, legend.js, tractPanel.js, header.js, dataStatusNotice.js
 ```
 
 ## Adding or relabeling an indicator
