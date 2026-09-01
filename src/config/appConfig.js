@@ -13,9 +13,9 @@ export const FEATURE_LAYER_URL =
 // fills are drawn at TRACT_FILL_OPACITY, so a busy or high-contrast basemap
 // (imagery especially) competes with the choropleth ramp underneath it.
 export const DEFAULT_BASEMAP = "gray-vector";
-
+1
 export const APP_TITLE = "Stability Tract Explorer";
-export const APP_SUBTITLE = "KC Region — ACS 5-Year Indicators by Tract";
+export const APP_SUBTITLE = "Indicators by Tract";
 
 // GEOID prefix (state FIPS + county FIPS) -> county display name. Mirrors the
 // COUNTIES dict in 01_acs_tracts.py so tract popups can show a real place

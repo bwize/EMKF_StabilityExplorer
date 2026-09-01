@@ -33,7 +33,18 @@ const darkModeSwitch = headerNode.querySelector("calcite-switch");
 
 const controlsBody = el("calcite-panel", { heading: "Map controls" });
 const mapContainer = el("div", { class: "map-view" });
-const tractPanelSlot = el("div");
+// The tract panel is rebuilt wholesale on every render (its heading changes
+// with the selection), so the stable node re-renders mount into is the
+// shell-panel itself — not a wrapper div inside it. calcite-shell-panel gives
+// its slotted content a definite height and clips the overflow; an extra
+// auto-height div in between would leave .tract-panel's height: 100% resolving
+// against nothing, and a long indicator list would be cut off with no scrollbar.
+const tractPanelSlot = el("calcite-shell-panel", {
+  slot: "panel-end",
+  position: "end",
+  widthScale: "m",
+  displayMode: "dock",
+});
 
 mount(
   document.getElementById("root"),
@@ -47,11 +58,7 @@ mount(
       controlsBody,
     ),
     mapContainer,
-    el(
-      "calcite-shell-panel",
-      { slot: "panel-end", position: "end", widthScale: "m", displayMode: "dock" },
-      tractPanelSlot,
-    ),
+    tractPanelSlot,
   ),
 );
 

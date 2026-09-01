@@ -113,6 +113,18 @@ export const FIELD_META = {
     direction: "high",
     description: "More than 1.5 occupants per room.",
   },
+  // Not an ACS measure and not computed by 01_acs_tracts.py — this one is
+  // joined onto the layer from eviction court records, so it's the one field
+  // here whose vintage and geographic coverage can drift from the rest. A
+  // tract the court data simply doesn't cover comes back null, which the app
+  // already handles the same way it handles any missing rate: left out of the
+  // distribution, "N/A" in the panel, defaultSymbol on the map.
+  pct_evict_filing_rate: {
+    label: "Eviction Filing Rate",
+    group: "Housing",
+    direction: "high",
+    description: "Eviction cases filed against renter households, per 100 renter-occupied households.",
+  },
 
   // --- Economic security: employment, then income supports -----------------
   // The 16+ employment measures are age-structure sensitive; the prime-age
