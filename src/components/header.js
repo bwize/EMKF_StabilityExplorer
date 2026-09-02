@@ -1,10 +1,11 @@
 import { el } from "../dom.js";
 import { APP_TITLE, APP_SUBTITLE } from "../config/appConfig.js";
 
-// Absolute path from the site root — img.src resolves relative to the page
-// URL, not this module's location, so this can't be a relative "../..."
-// path the way a bundler-processed import could be.
-const KAUFFMAN_LOGO = "/src/assets/brand/EMKF_Stacked_RGB.png";
+// Resolved against this module's own URL rather than the page URL, so the
+// logo loads no matter what path the site is served from — a GitHub Pages
+// project subfolder (/EMKF_StabilityExplorer/) as much as a domain root.
+// import.meta.url is native ES modules; no bundler needed.
+const KAUFFMAN_LOGO = new URL("../assets/brand/EMKF_Stacked_RGB.png", import.meta.url).href;
 
 /**
  * @param {{ darkMode: boolean, onToggleDarkMode: (checked: boolean) => void }} props

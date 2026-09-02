@@ -77,10 +77,23 @@ but that pulls from npm, which defeats the point — Python ships with most
 systems and involves no package manager at all. A code editor's built-in
 "Live Server" style extension works too.)
 
+A local server is **required** — opening `index.html` from the filesystem
+does not work. Browsers refuse to load ES modules over `file://`, so
+`main.js` never runs and the page stays blank.
+
 **Deploying** is the same idea: copy this folder's contents to any static
-host (S3, GitHub Pages, an internal file share behind a web server, ...).
+host (GitHub Pages, S3, an internal file share behind a web server, ...).
 There's no build artifact to produce — what's in `src/` and `index.html` is
 what ships.
+
+Every asset path is **relative**, so the site works both at a domain root
+and in a subfolder — which is what GitHub Pages project sites use
+(`bwize.github.io/EMKF_StabilityExplorer/`). Keep it that way: a leading
+`/` in a `src`/`href` silently 404s on Pages and blanks the page. For the
+one path resolved at runtime rather than by the browser's HTML parser, see
+`KAUFFMAN_LOGO` in `src/components/header.js`. The empty `.nojekyll` file
+tells Pages to publish the files as-is instead of running them through
+Jekyll.
 
 ## Rendering, without a framework
 
