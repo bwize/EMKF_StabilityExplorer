@@ -4,6 +4,42 @@ import { isFlagged, vulnerabilityPercentile, isExcluded } from "../lib/stats.js"
 import { formatPercent, formatCount, formatOrdinal } from "../lib/format.js";
 import { FIELD_META, SUMMARY_FIELDS } from "../config/fieldMeta.js";
 import { GEOID_FIELD } from "../config/appConfig.js";
+import { MOBILITY_META, mobilityCategoryFor } from "../config/mobilityCategory.js";
+
+/**
+ * The tract's composite Mobility Category, with the swatch it's drawn with on
+ * the map. Sits at the very top of the panel, above the raw counts, because
+ * it's the classification the default map is showing — a clicked tract should
+ * name the bucket it was just seen in before it gets into per-indicator rates.
+ *
+ * Rendered for screened-out tracts too: "Excluded" is one of the categories,
+ * so this is the one piece of the panel that reads the same either way.
+ * Renders nothing if the layer has no category field, or the tract has no
+ * value on it.
+ */
+function MobilityBadge({ tract, mobilityFieldName }) {
+  if (!mobilityFieldName) return null;
+  const category = mobilityCategoryFor(tract[mobilityFieldName]);
+  if (!category) return null;
+
+  return el(
+    "div",
+    { class: "mobility-badge", title: MOBILITY_META.description },
+    el("span", {
+      // Hatched and unrecognized categories have no fill color of their own:
+      // the hatch is drawn in CSS, and an unrecognized category falls back to
+      // the neutral swatch the stylesheet gives an uncolored one.
+      class: `mobility-badge-swatch${category.hatched ? " is-hatched" : ""}`,
+      style: category.hatched || !category.color ? null : { backgroundColor: category.color },
+    }),
+    el(
+      "span",
+      { class: "mobility-badge-text" },
+      el("span", { class: "mobility-badge-caption" }, MOBILITY_META.label),
+      el("span", { class: "mobility-badge-value" }, category.label),
+    ),
+  );
+}
 
 /** The raw-count strip shown for every tract, screened out or not. */
 function TractSummary({ tract }) {
@@ -21,7 +57,14 @@ function TractSummary({ tract }) {
   );
 }
 
-export function TractPanel({ tract, groupedFields, fieldStats, excludeFieldName, onClose }) {
+export function TractPanel({
+  tract,
+  groupedFields,
+  fieldStats,
+  excludeFieldName,
+  mobilityFieldName,
+  onClose,
+}) {
   if (!tract) {
     return el(
       "calcite-panel",
@@ -49,6 +92,7 @@ export function TractPanel({ tract, groupedFields, fieldStats, excludeFieldName,
       el(
         "div",
         { class: "tract-panel-body" },
+        MobilityBadge({ tract, mobilityFieldName }),
         el(
           "calcite-notice",
           { open: true, icon: "exclamation-mark-triangle", kind: "warning", scale: "s" },
@@ -97,6 +141,7 @@ export function TractPanel({ tract, groupedFields, fieldStats, excludeFieldName,
     el(
       "div",
       { class: "tract-panel-body" },
+      MobilityBadge({ tract, mobilityFieldName }),
       TractSummary({ tract }),
 
       // The count pill is the heading for the flagged list, so the two are

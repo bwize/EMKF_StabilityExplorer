@@ -1,12 +1,15 @@
 import { el } from "../dom.js";
-import { FIELD_META } from "../config/fieldMeta.js";
 
 /**
- * Grouped dropdown of every indicator currently available on the live
- * layer. `groupedFields` is [[groupName, [fieldId, ...]], ...] from
- * lib/layerFields.js — already filtered to fields that actually exist.
+ * Grouped dropdown of every indicator currently available on the live layer.
+ *
+ * `groups` is [[groupName, [{id, label}, ...]], ...], assembled in main.js —
+ * already filtered to fields that actually exist, and carrying its own labels
+ * rather than looking them up in FIELD_META, because the Mobility Category
+ * entry at the top of the list isn't a FIELD_META rate indicator (see
+ * config/mobilityCategory.js).
  */
-export function IndicatorPicker({ groupedFields, value, onChange }) {
+export function IndicatorPicker({ groups, value, onChange }) {
   const select = el(
     "calcite-select",
     {
@@ -18,11 +21,11 @@ export function IndicatorPicker({ groupedFields, value, onChange }) {
       scale: "l",
       onCalciteSelectChange: (event) => onChange(event.target.value),
     },
-    groupedFields.map(([group, ids]) =>
+    groups.map(([group, items]) =>
       el(
         "calcite-option-group",
         { label: group },
-        ids.map((id) => el("calcite-option", { value: id, label: FIELD_META[id].label })),
+        items.map(({ id, label }) => el("calcite-option", { value: id, label })),
       ),
     ),
   );

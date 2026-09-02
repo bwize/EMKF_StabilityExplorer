@@ -14,7 +14,7 @@ export const FEATURE_LAYER_URL =
 // (imagery especially) competes with the choropleth ramp underneath it.
 export const DEFAULT_BASEMAP = "gray-vector";
 1
-export const APP_TITLE = "Stability Tract Explorer";
+export const APP_TITLE = "Stability Explorer";
 export const APP_SUBTITLE = "Indicators by Tract";
 
 // GEOID prefix (state FIPS + county FIPS) -> county display name. Mirrors the

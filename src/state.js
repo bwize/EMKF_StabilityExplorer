@@ -14,6 +14,7 @@ export const state = {
   layerFieldNames: null,
   records: null,
   excludeFieldName: null,
+  mobilityFieldName: null,
   activeFieldId: null,
   selectedTract: null,
   darkMode: prefersDark(),

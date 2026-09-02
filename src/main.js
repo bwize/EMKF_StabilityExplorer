@@ -10,9 +10,14 @@ import { DataStatusNotice } from "./components/dataStatusNotice.js";
 
 import { FIELD_META } from "./config/fieldMeta.js";
 import { EXCLUDE_FIELD_CANDIDATES } from "./config/appConfig.js";
+import {
+  MOBILITY_FIELD,
+  MOBILITY_GROUP,
+  MOBILITY_META,
+} from "./config/mobilityCategory.js";
 import { getActiveFieldIds, groupActiveFields, findField } from "./lib/layerFields.js";
 import { computeAllFieldStats } from "./lib/stats.js";
-import { buildClassBreaksRenderer } from "./lib/classify.js";
+import { buildClassBreaksRenderer, buildMobilityRenderer } from "./lib/classify.js";
 
 const TOTAL_TRACKED_FIELDS = Object.keys(FIELD_META).length;
 
@@ -65,11 +70,19 @@ mount(
 const map = initMapView(mapContainer, {
   onLayerReady: ({ fieldNames, records }) => {
     const active = getActiveFieldIds(fieldNames);
+    // Resolved off the live field list rather than used as a literal, so a
+    // layer republished without the composite category (or with it renamed)
+    // just falls back to the first rate indicator instead of rendering an
+    // empty map. Same defensive lookup the exclude flag gets.
+    const mobilityFieldName = findField(fieldNames, [MOBILITY_FIELD]);
     setState({
       layerFieldNames: fieldNames,
       records,
       excludeFieldName: findField(fieldNames, EXCLUDE_FIELD_CANDIDATES),
-      activeFieldId: active[0] ?? null,
+      mobilityFieldName,
+      // The composite category is the map users land on: one look at the whole
+      // region before they drill into any single indicator.
+      activeFieldId: mobilityFieldName ?? active[0] ?? null,
     });
   },
   onTractClick: (attributes) => setState({ selectedTract: attributes }),
@@ -94,11 +107,22 @@ function render() {
     ? computeAllFieldStats(state.records, activeFieldIds, state.excludeFieldName)
     : new Map();
 
-  const currentMeta = state.activeFieldId ? FIELD_META[state.activeFieldId] : null;
-  const currentStats = state.activeFieldId ? fieldStats.get(state.activeFieldId) : null;
+  // The composite category is a string field with its classes already decided
+  // in the data, so it takes the categorical renderer and skips the whole
+  // stats/natural-breaks path below — there's no distribution to classify.
+  const isMobility =
+    state.mobilityFieldName !== null && state.activeFieldId === state.mobilityFieldName;
 
-  const rendererInfo =
-    state.activeFieldId && currentMeta && currentStats && currentStats.sorted.length > 0
+  const currentMeta = isMobility
+    ? MOBILITY_META
+    : state.activeFieldId
+      ? FIELD_META[state.activeFieldId]
+      : null;
+  const currentStats = isMobility || !state.activeFieldId ? null : fieldStats.get(state.activeFieldId);
+
+  const rendererInfo = isMobility
+    ? buildMobilityRenderer(state.mobilityFieldName)
+    : state.activeFieldId && currentMeta && currentStats && currentStats.sorted.length > 0
       ? buildClassBreaksRenderer({
           field: state.activeFieldId,
           values: currentStats.sorted,
@@ -106,6 +130,18 @@ function render() {
           excludeFieldName: state.excludeFieldName,
         })
       : null;
+
+  // The picker carries its own labels (see IndicatorPicker) because the
+  // composite category at the top of the list isn't a FIELD_META entry.
+  const pickerGroups = [
+    ...(state.mobilityFieldName
+      ? [[MOBILITY_GROUP, [{ id: state.mobilityFieldName, label: MOBILITY_META.label }]]]
+      : []),
+    ...groupedFields.map(([group, ids]) => [
+      group,
+      ids.map((id) => ({ id, label: FIELD_META[id].label })),
+    ]),
+  ];
 
   map.setRenderer(rendererInfo?.renderer);
   // Clear the map highlight when the panel is closed (selectedTract -> null)
@@ -123,12 +159,16 @@ function render() {
           DataStatusNotice({ activeCount: activeFieldIds.length, totalCount: TOTAL_TRACKED_FIELDS }),
           state.activeFieldId &&
             IndicatorPicker({
-              groupedFields,
+              groups: pickerGroups,
               value: state.activeFieldId,
               onChange: (id) => setState({ activeFieldId: id }),
             }),
           currentMeta && el("p", { class: "indicator-description" }, currentMeta.description),
-          Legend({ breaks: rendererInfo?.breaks, direction: currentMeta?.direction }),
+          Legend({
+            breaks: rendererInfo?.breaks,
+            direction: currentMeta?.direction,
+            hint: isMobility ? MOBILITY_META.legendHint : null,
+          }),
         ),
   );
 
@@ -139,6 +179,7 @@ function render() {
       groupedFields,
       fieldStats,
       excludeFieldName: state.excludeFieldName,
+      mobilityFieldName: state.mobilityFieldName,
       onClose: () => setState({ selectedTract: null }),
     }),
   );

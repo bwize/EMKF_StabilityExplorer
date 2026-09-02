@@ -104,6 +104,27 @@ calcite-shell {
   border: 1px solid rgba(0, 0, 0, 0.25);
 }
 
+/* Crosshatch for the "Excluded" mobility category, matching the map's
+   diagonal-cross fill. Two gradients cross at +/-45deg; the transparent gaps
+   let the swatch background read through the way the basemap reads through
+   the polygon on the map. Theme-aware line color, since unlike the four
+   category fills this one has to hold up against both Calcite modes. */
+.legend-swatch.is-hatched,
+.mobility-badge-swatch.is-hatched {
+  background-color: var(--calcite-color-foreground-1);
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0 3px,
+      var(--calcite-color-text-3) 3px 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 3px,
+      var(--calcite-color-text-3) 3px 4px
+    );
+}
+
 .legend-label {
   font-size: 1.5rem;
   font-variant-numeric: tabular-nums;
@@ -148,6 +169,56 @@ calcite-shell {
   flex-direction: column;
   gap: 0.75rem;
   padding: 0.5rem 1rem 1rem;
+}
+
+/* The tract's composite Mobility Category, above the raw-count strip. Reuses
+   the summary strip's card treatment (same border, radius, and surface) so the
+   two read as one block at the top of the panel rather than as competing
+   headers, but keeps the swatch inline so the category is identifiable against
+   the legend at a glance. */
+.mobility-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--calcite-color-border-3);
+  border-radius: 4px;
+  background: var(--calcite-color-foreground-1);
+}
+
+.mobility-badge-swatch {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  /* Fallback surface for a category the config has no color for — an
+     unrecognized value still gets a swatch-shaped placeholder rather than an
+     invisible gap that misaligns the text beside it. */
+  background-color: var(--calcite-color-foreground-3);
+}
+
+.mobility-badge-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+/* Same caption treatment as .tract-summary-label, so the badge and the strip
+   below it share one label voice. */
+.mobility-badge-caption {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--calcite-color-text-3);
+}
+
+.mobility-badge-value {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--calcite-color-text-1);
 }
 
 /* Raw-count summary strip above the indicator groups. */

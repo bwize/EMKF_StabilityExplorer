@@ -2,9 +2,11 @@
 
 A vanilla-JS + ArcGIS Maps SDK app for exploring the KC-region ACS tract
 indicators computed by `Code/01_acs_tracts.py` in the Stability project.
-Pick any RATES indicator from the dropdown to choropleth it (natural-breaks
-classification); click a tract to see every indicator for it, with the ones
-in the worst 10% region-wide flagged.
+The map opens on the composite **Mobility Category** classification, the
+one-look summary of the region; pick any RATES indicator from the dropdown to
+choropleth it instead (natural-breaks classification). Click a tract to see its
+mobility category and every indicator for it, with the ones in the worst 10%
+region-wide flagged.
 
 This app is intentionally separate from the Python pipeline — it only reads
 from the published ArcGIS Online FeatureServer, it never touches the Box
@@ -122,10 +124,11 @@ src/
   config/
     appConfig.js     # FeatureServer URL, county lookup, class count, flag threshold
     fieldMeta.js      # <-- the file you'll actually edit: label/group/direction per indicator
+    mobilityCategory.js # the composite Mobility Category: field name, categories, colors
   lib/
     geoid.js           # GEOID -> county name + tract number formatting
     stats.js            # z-score / percentile / "top 10%" flagging logic
-    classify.js          # Jenks natural breaks -> ArcGIS ClassBreaksRenderer
+    classify.js          # Jenks natural breaks -> ClassBreaksRenderer; categories -> UniqueValueRenderer
     colorRamps.js         # choropleth color ramps (validated with the dataviz skill)
     layerFields.js         # intersects fieldMeta.js with whatever fields the live layer actually has
   components/
