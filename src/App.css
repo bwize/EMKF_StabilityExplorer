@@ -79,6 +79,31 @@ calcite-shell {
   margin-bottom: -0.25rem;
 }
 
+/* ZIP picker + overlay switch, one bordered block under the legend. */
+.zip-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--calcite-color-border-3);
+}
+
+.zip-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  width: 100%;
+  --calcite-label-margin-bottom: 0;
+}
+
+.zip-picker calcite-combobox {
+  width: 100%;
+}
+
+.zip-toggle {
+  --calcite-label-margin-bottom: 0;
+}
+
 .legend {
   display: flex;
   flex-direction: column;
@@ -102,27 +127,6 @@ calcite-shell {
   height: 2rem;
   border-radius: 3px;
   border: 1px solid rgba(0, 0, 0, 0.25);
-}
-
-/* Crosshatch for the "Excluded" mobility category, matching the map's
-   diagonal-cross fill. Two gradients cross at +/-45deg; the transparent gaps
-   let the swatch background read through the way the basemap reads through
-   the polygon on the map. Theme-aware line color, since unlike the four
-   category fills this one has to hold up against both Calcite modes. */
-.legend-swatch.is-hatched,
-.mobility-badge-swatch.is-hatched {
-  background-color: var(--calcite-color-foreground-1);
-  background-image:
-    repeating-linear-gradient(
-      45deg,
-      transparent 0 3px,
-      var(--calcite-color-text-3) 3px 4px
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      transparent 0 3px,
-      var(--calcite-color-text-3) 3px 4px
-    );
 }
 
 .legend-label {
@@ -305,9 +309,9 @@ calcite-shell {
   color: var(--calcite-color-text-3);
 }
 
-/* The full indicator list. Separated from the flagged block above by a rule
-   and a wider gap than the panel's own rhythm, because the flagged rows are
-   repeated down here — without the break the two lists blur into one. */
+/* The unflagged indicator list. Separated from the flagged block above by a
+   rule and a wider gap than the panel's own rhythm — without the break the
+   two lists blur into one. */
 .indicator-sections {
   display: flex;
   flex-direction: column;
@@ -386,4 +390,16 @@ calcite-shell {
 .indicator-row .flag-icon {
   flex: none;
   color: var(--calcite-color-status-danger);
+}
+
+/* --- Splash screen: welcome dialog on load ---------------------------- */
+
+.splash-body p {
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.splash-body p:last-child {
+  margin-bottom: 0;
 }

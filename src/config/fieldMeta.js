@@ -33,33 +33,46 @@ export const FIELD_GROUPS = [
   "Education & Access",
 ];
 
-// Raw counts shown as a summary strip at the top of the tract panel, before
-// any of the indicator groups. These are plain counts rather than rates, so
-// they're formatted with formatCount and never classified or flagged. Same
-// rule as FIELD_META: listing a field here is safe even if the live layer
-// doesn't have it — a missing field just renders as "N/A".
+// Summary strip at the top of the tract panel, before any of the indicator
+// groups. Each entry's value() derives what's shown from the tract's raw
+// attributes, and format says how to render it ("count" -> formatCount,
+// "percent" -> formatPercent). Never classified or flagged. Same rule as
+// FIELD_META: a field missing from the live layer just renders as "N/A".
 export const SUMMARY_FIELDS = [
   {
-    id: "total_population",
     label: "Total Population",
     description: "Total population of the tract.",
+    format: "count",
+    value: (t) => t.total_population,
   },
   {
-    id: "total_households",
     label: "Total Households",
     description: "Total occupied households in the tract.",
+    format: "count",
+    value: (t) => t.total_households,
   },
   {
-    id: "renter_occupied",
-    label: "Renter-Occupied",
-    description: "Occupied housing units whose occupants rent.",
+    label: "% Owner-Occupied",
+    description: "Share of occupied housing units whose occupants own.",
+    format: "percent",
+    // Same denominator 01_acs_tracts.py uses for pct_renter_occupied.
+    value: (t) => ratioPercent(t.owner_occupied, (t.owner_occupied ?? NaN) + (t.renter_occupied ?? NaN)),
   },
   {
-    id: "owner_occupied",
-    label: "Owner-Occupied",
-    description: "Occupied housing units whose occupants own.",
+    label: "% Group Quarters",
+    description:
+      "Share of the tract's population living in group quarters (dorms, nursing homes, prisons, etc.).",
+    format: "percent",
+    value: (t) => ratioPercent(t.population_gq, t.total_population),
   },
 ];
+
+/** numerator / denominator * 100, or null when either is missing or the denominator is 0. */
+function ratioPercent(numerator, denominator) {
+  if (numerator === null || numerator === undefined || !denominator) return null;
+  const pct = (numerator / denominator) * 100;
+  return Number.isFinite(pct) ? pct : null;
+}
 
 export const FIELD_META = {
   // --- Housing: cost, then stock & conditions ------------------------------

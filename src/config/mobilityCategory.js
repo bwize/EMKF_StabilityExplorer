@@ -25,7 +25,7 @@ export const MOBILITY_META = {
   label: "Mobility Category",
   description:
     "Composite classification of each tract's economic mobility, derived from the tract's PCA score across poverty, near-poverty, educational attainment, and unemployment.",
-  legendHint: "Darker = more limited mobility. Hatched tracts are excluded.",
+  legendHint: "Darker = more limited mobility. White tracts are excluded.",
 };
 
 // Ordered least- to most-limited; the legend, and the light -> dark reading of
@@ -36,23 +36,19 @@ export const MOBILITY_META = {
 // these categories, not a ramp that should follow along if CHOROPLETH_RAMP is
 // ever re-picked.
 //
-// "Excluded" is drawn as a hatch rather than a fifth color: it isn't the far
-// end of the scale, it's the absence of a classification (those are exactly the
+// "Excluded" is white rather than a fifth ramp color: it isn't the far end of
+// the scale, it's the absence of a classification (those are exactly the
 // tracts that fail the small-sample screen — see EXCLUDE_FIELD_CANDIDATES in
-// appConfig.js), and a hatch says "not applicable" where a fifth swatch would
-// say "even worse than the fourth."
+// appConfig.js), so it reads as blank rather than as "even worse than the
+// fourth." (A neutral gray was tried and read too close to the teal step once
+// drawn at TRACT_FILL_OPACITY over the gray basemap.)
 export const MOBILITY_CATEGORIES = [
   { value: "Existing Mobility", label: "Existing Mobility", color: "#ffffcc" },
   { value: "Limited Mobility", label: "Limited Mobility", color: "#a1dab4" },
   { value: "Very Limited Mobility", label: "Very Limited Mobility", color: "#41b6c4" },
   { value: "Extremely Limited Mobility", label: "Extremely Limited Mobility", color: "#253494" },
-  { value: "Excluded", label: "Excluded (small sample)", color: null, hatched: true },
+  { value: "Excluded", label: "Excluded (small sample)", color: "#ffffff" },
 ];
-
-// Hatch line color for the "Excluded" polygons on the map. Mid-gray, to sit in
-// the same register as the polygon outlines (OUTLINE_COLOR in colorRamps.js)
-// rather than competing with the four category fills.
-export const MOBILITY_HATCH_COLOR = [110, 110, 110, 1];
 
 /**
  * The category entry for a tract's raw field value, or null when the tract has

@@ -7,6 +7,8 @@ import { IndicatorPicker } from "./components/indicatorPicker.js";
 import { Legend } from "./components/legend.js";
 import { TractPanel } from "./components/tractPanel.js";
 import { DataStatusNotice } from "./components/dataStatusNotice.js";
+import { SplashScreen } from "./components/splashScreen.js";
+import { ZipPicker } from "./components/zipPicker.js";
 
 import { FIELD_META } from "./config/fieldMeta.js";
 import { EXCLUDE_FIELD_CANDIDATES } from "./config/appConfig.js";
@@ -67,6 +69,10 @@ mount(
   ),
 );
 
+// Outside the shell so render()'s remounts never touch it; it removes itself
+// once dismissed.
+document.body.append(SplashScreen());
+
 const map = initMapView(mapContainer, {
   onLayerReady: ({ fieldNames, records }) => {
     const active = getActiveFieldIds(fieldNames);
@@ -86,6 +92,8 @@ const map = initMapView(mapContainer, {
     });
   },
   onTractClick: (attributes) => setState({ selectedTract: attributes }),
+  onZipsReady: (zipRecords) => setState({ zipRecords }),
+  showZips: state.showZips,
 });
 
 subscribe(render);
@@ -144,6 +152,22 @@ function render() {
   ];
 
   map.setRenderer(rendererInfo?.renderer);
+  map.setZipsVisible(state.showZips);
+  map.selectZip(state.selectedZip);
+
+  // ZIP records carry the same fields as tracts (01_acs_tracts.py builds both),
+  // minus anything tract-only. Keys are unioned because a ZIP with no ACS rows
+  // has only its ZIP property. Ranked among ZIPs, not tracts — see TractPanel.
+  const zipFieldNames = state.zipRecords
+    ? [...new Set(state.zipRecords.flatMap((r) => Object.keys(r)))]
+    : [];
+  const zipExcludeFieldName = findField(zipFieldNames, EXCLUDE_FIELD_CANDIDATES);
+  const zipRecord = state.selectedZip
+    ? state.zipRecords?.find((r) => String(r.ZIP) === state.selectedZip) ?? null
+    : null;
+  const zipStats = zipRecord
+    ? computeAllFieldStats(state.zipRecords, activeFieldIds, zipExcludeFieldName)
+    : null;
   // Clear the map highlight when the panel is closed (selectedTract -> null)
   // without a new tract having been clicked — a no-op if there's nothing to
   // clear (e.g. right after a fresh click already set it).
@@ -169,18 +193,50 @@ function render() {
             direction: currentMeta?.direction,
             hint: isMobility ? MOBILITY_META.legendHint : null,
           }),
+          el(
+            "div",
+            { class: "zip-controls" },
+            state.zipRecords &&
+              ZipPicker({
+                zips: state.zipRecords.map((r) => String(r.ZIP)).sort(),
+                value: state.selectedZip,
+                // A new ZIP replaces any tract in the detail panel.
+                onChange: (zip) => setState({ selectedZip: zip, selectedTract: null }),
+              }),
+            el(
+              "calcite-label",
+              { layout: "inline-space-between", class: "zip-toggle" },
+              "Show ZIP code boundaries",
+              el("calcite-switch", {
+                checked: state.showZips,
+                onCalciteSwitchChange: (event) => setState({ showZips: event.target.checked }),
+              }),
+            ),
+          ),
         ),
   );
 
+  // A clicked tract takes the panel; with no tract selected it shows the chosen
+  // ZIP, so closing a tract drops back to the ZIP it was compared against.
   mount(
     tractPanelSlot,
-    TractPanel({
-      tract: state.selectedTract,
-      groupedFields,
-      fieldStats,
-      excludeFieldName: state.excludeFieldName,
-      mobilityFieldName: state.mobilityFieldName,
-      onClose: () => setState({ selectedTract: null }),
-    }),
+    !state.selectedTract && zipRecord
+      ? TractPanel({
+          tract: zipRecord,
+          place: { heading: `ZIP ${zipRecord.ZIP}`, description: "ZIP Code Tabulation Area", unit: "ZIP codes" },
+          groupedFields,
+          fieldStats: zipStats,
+          excludeFieldName: zipExcludeFieldName,
+          mobilityFieldName: null,
+          onClose: () => setState({ selectedZip: null }),
+        })
+      : TractPanel({
+          tract: state.selectedTract,
+          groupedFields,
+          fieldStats,
+          excludeFieldName: state.excludeFieldName,
+          mobilityFieldName: state.mobilityFieldName,
+          onClose: () => setState({ selectedTract: null }),
+        }),
   );
 }

@@ -26,11 +26,10 @@ function MobilityBadge({ tract, mobilityFieldName }) {
     "div",
     { class: "mobility-badge", title: MOBILITY_META.description },
     el("span", {
-      // Hatched and unrecognized categories have no fill color of their own:
-      // the hatch is drawn in CSS, and an unrecognized category falls back to
-      // the neutral swatch the stylesheet gives an uncolored one.
-      class: `mobility-badge-swatch${category.hatched ? " is-hatched" : ""}`,
-      style: category.hatched || !category.color ? null : { backgroundColor: category.color },
+      // An unrecognized category has no fill color of its own and falls back
+      // to the neutral swatch the stylesheet gives an uncolored one.
+      class: "mobility-badge-swatch",
+      style: category.color ? { backgroundColor: category.color } : null,
     }),
     el(
       "span",
@@ -41,24 +40,40 @@ function MobilityBadge({ tract, mobilityFieldName }) {
   );
 }
 
-/** The raw-count strip shown for every tract, screened out or not. */
+/** The summary strip (counts and shares) shown for every tract, screened out or not. */
 function TractSummary({ tract }) {
   return el(
     "div",
     { class: "tract-summary" },
-    SUMMARY_FIELDS.map(({ id, label, description }) =>
+    SUMMARY_FIELDS.map(({ label, description, format, value }) =>
       el(
         "div",
         { class: "tract-summary-stat", title: description },
-        el("span", { class: "tract-summary-value" }, formatCount(tract[id])),
+        el(
+          "span",
+          { class: "tract-summary-value" },
+          format === "percent" ? formatPercent(value(tract)) : formatCount(value(tract)),
+        ),
         el("span", { class: "tract-summary-label" }, label),
       ),
     ),
   );
 }
 
+/**
+ * Detail panel for one tract — or one ZIP code, when `place` is given.
+ *
+ * `place` overrides the tract-derived heading and description, and `unit`
+ * names what the percentiles and flags are measured against: a ZIP is ranked
+ * among the region's ZIP codes (`fieldStats` built from ZIP records), not
+ * among tracts, since a ZIP-wide rate averages over many tracts and would
+ * almost never reach the tract distribution's tails.
+ *
+ * @param {{ heading: string, description: string, unit: string }} [place]
+ */
 export function TractPanel({
   tract,
+  place,
   groupedFields,
   fieldStats,
   excludeFieldName,
@@ -78,7 +93,11 @@ export function TractPanel({
     );
   }
 
-  const { county, tractLabel } = describeTract(tract[GEOID_FIELD]);
+  const { heading, description, unit } = place ?? (() => {
+    const { county, tractLabel } = describeTract(tract[GEOID_FIELD]);
+    return { heading: `Tract ${tractLabel}`, description: county, unit: "tracts" };
+  })();
+  const unitSingular = unit === "tracts" ? "tract" : "ZIP code";
 
   // A tract that fails the small-sample screen is left out of every
   // distribution (lib/stats.js) and isn't classified on the map, so showing
@@ -87,7 +106,7 @@ export function TractPanel({
   if (isExcluded(tract, excludeFieldName)) {
     return el(
       "calcite-panel",
-      { heading: `Tract ${tractLabel}`, description: county, class: "tract-panel" },
+      { heading, description, class: "tract-panel" },
       el("calcite-action", { icon: "x", text: "Close", slot: "header-actions-end", onClick: onClose }),
       el(
         "div",
@@ -96,13 +115,13 @@ export function TractPanel({
         el(
           "calcite-notice",
           { open: true, icon: "exclamation-mark-triangle", kind: "warning", scale: "s" },
-          el("div", { slot: "title" }, "Small sample size — tract excluded"),
+          el("div", { slot: "title" }, `Small sample size — ${unitSingular} excluded`),
           el(
             "div",
             { slot: "message" },
-            "This tract falls below the population/household screen. Its rates would swing " +
+            `This ${unitSingular} falls below the population/household screen. Its rates would swing ` +
               "too widely to be meaningful, so it is left out of the map classification and " +
-              "out of every region-wide statistic. Only its raw counts are shown.",
+              "out of every region-wide statistic. Only its summary figures are shown.",
           ),
         ),
         TractSummary({ tract }),
@@ -116,26 +135,30 @@ export function TractPanel({
     ids.map((id) => {
       const meta = FIELD_META[id];
       const value = tract[id];
-      return { id, meta, value, flagged: isFlagged(value, meta.direction, fieldStats.get(id)) };
+      const stats = fieldStats.get(id);
+      return {
+        id,
+        meta,
+        value,
+        flagged: isFlagged(value, meta.direction, stats),
+        rank: vulnerabilityPercentile(value, meta.direction, stats),
+      };
     }),
   ]);
   // Flagged indicators are pulled up into a summary list at the top of the
-  // panel and then shown again in their own group below — the duplication is
-  // deliberate so the worst-off values are visible without scrolling.
+  // panel and left out of the grouped list below, so each indicator appears
+  // exactly once. Groups whose every indicator was flagged drop out entirely.
   const flaggedRows = rows.flatMap(([group, items]) =>
-    items
-      .filter((r) => r.flagged)
-      .map((r) => ({
-        ...r,
-        group,
-        rank: vulnerabilityPercentile(r.value, r.meta.direction, fieldStats.get(r.id)),
-      })),
+    items.filter((r) => r.flagged).map((r) => ({ ...r, group })),
   );
   const flaggedCount = flaggedRows.length;
+  const unflaggedGroups = rows
+    .map(([group, items]) => [group, items.filter((r) => !r.flagged)])
+    .filter(([, items]) => items.length > 0);
 
   return el(
     "calcite-panel",
-    { heading: `Tract ${tractLabel}`, description: county, class: "tract-panel" },
+    { heading, description, class: "tract-panel" },
     el("calcite-action", { icon: "x", text: "Close", slot: "header-actions-end", onClick: onClose }),
 
     el(
@@ -156,8 +179,8 @@ export function TractPanel({
           { class: "tract-panel-hint" },
           el("calcite-icon", { icon: "flag", scale: "s", class: "flag-icon" }),
           flaggedCount === 0
-            ? " No indicators in the worst 10% of tracts region-wide."
-            : ` ${flaggedCount} indicator${flaggedCount === 1 ? "" : "s"} in the worst 10% of tracts region-wide.`,
+            ? ` No indicators in the worst 10% of ${unit} region-wide.`
+            : ` ${flaggedCount} indicator${flaggedCount === 1 ? "" : "s"} in the worst 10% of ${unit} region-wide.`,
         ),
 
         flaggedCount > 0 &&
@@ -172,7 +195,7 @@ export function TractPanel({
                   title:
                     rank === null
                       ? meta.description
-                      : `${meta.description} Only ${rank}% of tracts region-wide are as badly off or worse.`,
+                      : `${meta.description} Only ${rank}% of ${unit} region-wide are as badly off or worse.`,
                 },
                 el(
                   "span",
@@ -192,41 +215,51 @@ export function TractPanel({
           ),
       ),
 
-      // The full list repeats the flagged rows, so it needs a hard boundary
-      // and a name — without them the first group reads as a continuation
-      // of the flagged list rather than the start of everything. Sentence
-      // case here against the uppercase group captions below, so the two
-      // heading levels don't compete.
-      el(
-        "div",
-        { class: "indicator-sections" },
-        el("h3", { class: "indicator-sections-heading" }, "All indicators"),
-
-        // Plain sections rather than collapsible calcite-blocks: at ~3-5
-        // rows a group, the block's heading, chevron, and border cost about
-        // as much height as the rows they wrap. Revisit if FIELD_GROUPS
-        // gets fine-grained again.
-        rows.map(([group, items]) =>
+      // The remaining (unflagged) indicators, below a hard boundary and a
+      // name so the first group doesn't read as a continuation of the
+      // flagged list. Sentence case here against the uppercase group captions
+      // below, so the two heading levels don't compete.
+      unflaggedGroups.length > 0 &&
+        el(
+          "div",
+          { class: "indicator-sections" },
           el(
-            "section",
-            { class: "indicator-section" },
-            el("h4", { class: "indicator-section-heading" }, group),
-            items.map(({ id, meta, value, flagged }) =>
-              el(
-                "div",
-                { class: `indicator-row${flagged ? " is-flagged" : ""}`, title: meta.description },
-                el("span", { class: "indicator-row-label" }, meta.label),
+            "h3",
+            { class: "indicator-sections-heading" },
+            flaggedCount > 0 ? "Other indicators" : "All indicators",
+          ),
+
+          // Plain sections rather than collapsible calcite-blocks: at ~3-5
+          // rows a group, the block's heading, chevron, and border cost about
+          // as much height as the rows they wrap. Revisit if FIELD_GROUPS
+          // gets fine-grained again.
+          unflaggedGroups.map(([group, items]) =>
+            el(
+              "section",
+              { class: "indicator-section" },
+              el("h4", { class: "indicator-section-heading" }, group),
+              items.map(({ meta, value, rank }) =>
                 el(
-                  "span",
-                  { class: "indicator-row-value" },
-                  flagged && el("calcite-icon", { icon: "flag", scale: "s", class: "flag-icon" }),
-                  formatPercent(value),
+                  "div",
+                  {
+                    class: "indicator-row",
+                    title:
+                      rank === null
+                        ? meta.description
+                        : `${meta.description} ${rank}% of ${unit} region-wide are as badly off or worse.`,
+                  },
+                  el("span", { class: "indicator-row-label" }, meta.label),
+                  el(
+                    "span",
+                    { class: "indicator-row-value" },
+                    formatPercent(value),
+                    rank !== null && el("span", { class: "indicator-row-rank" }, `(${formatOrdinal(rank)} percentile)`),
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
     ),
   );
 }

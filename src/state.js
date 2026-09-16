@@ -17,6 +17,12 @@ export const state = {
   mobilityFieldName: null,
   activeFieldId: null,
   selectedTract: null,
+  showZips: true,
+  // Properties of every feature in the ZCTA GeoJSON, once loaded.
+  zipRecords: null,
+  // ZIP code chosen in the picker. The detail panel shows it whenever no tract
+  // is selected, so closing a tract falls back to the ZIP it sits in.
+  selectedZip: null,
   darkMode: prefersDark(),
 };
 

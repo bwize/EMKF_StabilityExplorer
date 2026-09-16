@@ -4,10 +4,7 @@ import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer.js";
 import { CLASS_COUNT, TRACT_FILL_OPACITY } from "../config/appConfig.js";
 import { getRampColors, withAlpha, OUTLINE_COLOR, OUTLINE_WIDTH } from "./colorRamps.js";
 import { formatPercent } from "./format.js";
-import {
-  MOBILITY_CATEGORIES,
-  MOBILITY_HATCH_COLOR,
-} from "../config/mobilityCategory.js";
+import { MOBILITY_CATEGORIES } from "../config/mobilityCategory.js";
 
 /**
  * Natural-breaks (Jenks) class boundaries — the same classification method
@@ -134,19 +131,18 @@ export function buildClassBreaksRenderer({ field, values, direction, excludeFiel
  * The small-sample screen needs no Arcade here either. Where a rate map has to
  * push excluded tracts out to the defaultSymbol (they'd otherwise distort the
  * break points), the layer already carries them as their own "Excluded"
- * category, drawn as a hatch so they read as unclassified rather than as the
+ * category, drawn in an off-ramp color so they read as unclassified rather than as the
  * far end of the scale.
  *
  * @param field  the layer's mobility-category field name
  * @returns {{ renderer: UniqueValueRenderer, breaks: Array }} — `breaks` is the
- *          same {color, label, hatched} shape the Legend takes from
+ *          same {color, label} shape the Legend takes from
  *          buildClassBreaksRenderer, so the legend renders both the same way.
  */
 export function buildMobilityRenderer(field) {
-  const breaks = MOBILITY_CATEGORIES.map(({ label, color, hatched }) => ({
+  const breaks = MOBILITY_CATEGORIES.map(({ label, color }) => ({
     color,
     label,
-    hatched: Boolean(hatched),
   }));
 
   const renderer = new UniqueValueRenderer({
@@ -159,20 +155,10 @@ export function buildMobilityRenderer(field) {
       outline: { color: OUTLINE_COLOR, width: OUTLINE_WIDTH },
     },
     defaultLabel: "Uncategorized",
-    uniqueValueInfos: MOBILITY_CATEGORIES.map(({ value, label, color, hatched }) => ({
+    uniqueValueInfos: MOBILITY_CATEGORIES.map(({ value, label, color }) => ({
       value,
       label,
-      // For a non-solid fill style, ArcGIS draws the hatch lines in `color` and
-      // leaves the polygon body transparent — so the basemap reads through the
-      // excluded tracts, which is the point.
-      symbol: hatched
-        ? {
-            type: "simple-fill",
-            style: "diagonal-cross",
-            color: MOBILITY_HATCH_COLOR,
-            outline: { color: OUTLINE_COLOR, width: OUTLINE_WIDTH },
-          }
-        : fillSymbol(color),
+      symbol: fillSymbol(color),
     })),
   });
 
