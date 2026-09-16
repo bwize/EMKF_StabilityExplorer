@@ -31,6 +31,7 @@ export const FIELD_GROUPS = [
   "Economic Security",
   "Mobility & Residential Churn",
   "Education & Access",
+  "Age",
 ];
 
 // Summary strip at the top of the tract panel, before any of the indicator
@@ -126,18 +127,15 @@ export const FIELD_META = {
     direction: "high",
     description: "More than 1.5 occupants per room.",
   },
-  // Not an ACS measure and not computed by 01_acs_tracts.py — this one is
-  // joined onto the layer from eviction court records, so it's the one field
-  // here whose vintage and geographic coverage can drift from the rest. A
-  // tract the court data simply doesn't cover comes back null, which the app
-  // already handles the same way it handles any missing rate: left out of the
-  // distribution, "N/A" in the panel, defaultSymbol on the map.
-  pct_evict_filing_rate: {
-    label: "Eviction Filing Rate",
-    group: "Housing",
-    direction: "high",
-    description: "Eviction cases filed against renter households, per 100 renter-occupied households.",
-  },
+  // Shelved for now. Not an ACS measure — 01_acs_tracts.py joins it from
+  // Eviction Lab's tract file, so its vintage and coverage can drift from the
+  // rest. Uncovered tracts come back null ("N/A", left out of the distribution).
+  // pct_evict_filing_rate: {
+  //   label: "Eviction Filing Rate",
+  //   group: "Housing",
+  //   direction: "high",
+  //   description: "Eviction cases filed against renter households, per 100 renter-occupied households.",
+  // },
 
   // --- Economic security: employment, then income supports -----------------
   // The 16+ employment measures are age-structure sensitive; the prime-age
@@ -266,6 +264,87 @@ export const FIELD_META = {
     group: "Education & Access",
     direction: "high",
     description: "Households where no member 14+ speaks English \"very well.\"",
+  },
+
+  // --- Age structure (context only, never flagged) -------------------------
+  // Shares of total population by age band, male + female combined (B01001).
+  pct_age_under5: {
+    label: "Age Under 5",
+    group: "Age",
+    direction: null,
+    description: "Share of the total population under 5 years old.",
+  },
+  pct_age_5_9: {
+    label: "Age 5 to 9",
+    group: "Age",
+    direction: null,
+    description: "Share of the total population aged 5 to 9 years old.",
+  },
+  pct_age_10_14: {
+    label: "Age 10 to 14",
+    group: "Age",
+    direction: null,
+    description: "Share of the total population aged 10 to 14 years old.",
+  },
+  pct_age_15_19: {
+    label: "Age 15 to 19",
+    group: "Age",
+    direction: null,
+    description: "Share of the total population aged 15 to 19 years old.",
+  },
+  pct_age_20_24: {
+    label: "Age 20 to 24",
+    group: "Age",
+    direction: null,
+    description: "Share of the total population aged 20 to 24 years old.",
+  },
+  pct_age_25_34: {
+    label: "Age 25 to 34",
+    group: "Age",
+    direction: null,
+    description: "Share of the total population aged 25 to 34 years old.",
+  },
+  pct_age_35_44: {
+    label: "Age 35 to 44",
+    group: "Age",
+    direction: null,
+    description: "Share of the total population aged 35 to 44 years old.",
+  },
+  pct_age_45_54: {
+    label: "Age 45 to 54",
+    group: "Age",
+    direction: null,
+    description: "Share of the total population aged 45 to 54 years old.",
+  },
+  pct_age_55_59: {
+    label: "Age 55 to 59",
+    group: "Age",
+    direction: null,
+    description: "Share of the total population aged 55 to 59 years old.",
+  },
+  pct_age_60_64: {
+    label: "Age 60 to 64",
+    group: "Age",
+    direction: null,
+    description: "Share of the total population aged 60 to 64 years old.",
+  },
+  pct_age_65_74: {
+    label: "Age 65 to 74",
+    group: "Age",
+    direction: null,
+    description: "Share of the total population aged 65 to 74 years old.",
+  },
+  pct_age_75_84: {
+    label: "Age 75 to 84",
+    group: "Age",
+    direction: null,
+    description: "Share of the total population aged 75 to 84 years old.",
+  },
+  pct_age_85plus: {
+    label: "Age 85 and Over",
+    group: "Age",
+    direction: null,
+    description: "Share of the total population aged 85 years and over.",
   },
 };
 

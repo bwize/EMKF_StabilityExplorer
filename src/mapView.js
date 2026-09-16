@@ -1,7 +1,6 @@
 import ArcGISMap from "@arcgis/core/Map.js";
 import EsriMapView from "@arcgis/core/views/MapView.js";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer.js";
-import GeoJSONLayer from "@arcgis/core/layers/GeoJSONLayer.js";
 import Graphic from "@arcgis/core/Graphic.js";
 // Both of these are deprecated in @arcgis/core 5.x in favor of the
 // <arcgis-basemap-gallery> / <arcgis-expand> web components in the separate
@@ -11,27 +10,14 @@ import Graphic from "@arcgis/core/Graphic.js";
 import BasemapGallery from "@arcgis/core/widgets/BasemapGallery.js";
 import Expand from "@arcgis/core/widgets/Expand.js";
 
-import { FEATURE_LAYER_URL, DEFAULT_BASEMAP } from "./config/appConfig.js";
+import {
+  FEATURE_LAYER_URL,
+  ZIP_LAYER_URL,
+  ZIP_FIELD,
+  HIDDEN_ZIPS,
+  DEFAULT_BASEMAP,
+} from "./config/appConfig.js";
 import { BRAND } from "./config/brand.js";
-
-// ZIP (ZCTA) boundaries for the region, trimmed and reprojected from
-// src/zcta.json by prep_zcta.py, with ACS fields joined in by 01_acs_tracts.py.
-// Resolved against this module's URL so it loads from any deploy path, same as
-// the header logo.
-const ZCTA_URL = new URL("./assets/zcta_kc.geojson", import.meta.url).href;
-
-/**
- * A GeoJSON Polygon/MultiPolygon as an ArcGIS polygon. Every ring is reversed:
- * GeoJSON winds outer rings counter-clockwise, ArcGIS clockwise.
- */
-function toEsriPolygon(geometry) {
-  const polygons = geometry.type === "Polygon" ? [geometry.coordinates] : geometry.coordinates;
-  return {
-    type: "polygon",
-    rings: polygons.flatMap((rings) => rings.map((ring) => [...ring].reverse())),
-    spatialReference: { wkid: 4326 },
-  };
-}
 
 /**
  * Owns the ArcGIS Map/MapView/FeatureLayer lifecycle. Ported from the old
@@ -52,8 +38,6 @@ function toEsriPolygon(geometry) {
 export function initMapView(container, { onLayerReady, onTractClick, onZipsReady, showZips = true }) {
   let layerViewRef = null;
   let highlightHandle = null;
-  // ZIP -> GeoJSON geometry, filled once the ZCTA file loads; selectZip() reads it.
-  const zipGeometries = new Map();
   let selectedZip = null;
   let zipGraphic = null;
 
@@ -67,8 +51,9 @@ export function initMapView(container, { onLayerReady, onTractClick, onZipsReady
   // reads through, and a darker, heavier line than the tract outlines so ZIP
   // edges stand out from tract edges. Labels only once zoomed in far enough
   // that ~200 of them don't pile up.
-  const zipLayer = new GeoJSONLayer({
-    url: ZCTA_URL,
+  const zipLayer = new FeatureLayer({
+    url: ZIP_LAYER_URL,
+    outFields: [ZIP_FIELD],
     title: "ZIP codes",
     visible: showZips,
     popupEnabled: false,
@@ -82,7 +67,7 @@ export function initMapView(container, { onLayerReady, onTractClick, onZipsReady
     },
     labelingInfo: [
       {
-        labelExpressionInfo: { expression: "$feature.ZIP" },
+        labelExpressionInfo: { expression: `$feature.${ZIP_FIELD}` },
         labelPlacement: "always-horizontal",
         maxScale: 0,
         minScale: 250000,
@@ -95,6 +80,22 @@ export function initMapView(container, { onLayerReady, onTractClick, onZipsReady
         },
       },
     ],
+  });
+
+  // A ZIP as a SQL literal for zipLayer's ZIP field, which may have been
+  // published as text or as a number. Only valid once the layer has loaded.
+  const zipLiteral = (zip) => {
+    const field = zipLayer.fields.find((f) => f.name === ZIP_FIELD);
+    return field?.type === "string" ? `'${zip.replace(/'/g, "''")}'` : String(Number(zip));
+  };
+
+  // Resolves once HIDDEN_ZIPS is filtered out at the layer, so the outlines,
+  // the attribute query, and selectZip() all see the same set of ZIPs. Every
+  // use of zipLayer below waits on this rather than on zipLayer.load().
+  const zipLayerReady = zipLayer.load().then(() => {
+    if (HIDDEN_ZIPS.length) {
+      zipLayer.definitionExpression = `${ZIP_FIELD} NOT IN (${HIDDEN_ZIPS.map(zipLiteral).join(", ")})`;
+    }
   });
 
   const map = new ArcGISMap({ basemap: DEFAULT_BASEMAP, layers: [featureLayer, zipLayer] });
@@ -145,20 +146,21 @@ export function initMapView(container, { onLayerReady, onTractClick, onZipsReady
       console.error("Failed to load the tract layer:", error);
     });
 
-  // The ZIP attributes (ACS fields) are read straight off the file rather than
-  // queried from zipLayer: GeoJSONLayer infers field types from the features,
-  // and a ZIP with no ACS rows (ZIP only) could skew that inference. Same URL
-  // as the layer, so the browser serves the second request from cache.
-  fetch(ZCTA_URL)
-    .then((response) => response.json())
-    .then((geojson) => {
-      for (const feature of geojson.features) {
-        zipGeometries.set(String(feature.properties.ZIP), feature.geometry);
-      }
-      onZipsReady?.(geojson.features.map((f) => f.properties));
+  // ZIP attributes (the same ACS fields as the tracts), without geometry;
+  // selectZip() fetches the one outline it needs on demand.
+  zipLayerReady
+    .then(() =>
+      zipLayer.queryFeatures({
+        where: "1=1",
+        outFields: ["*"],
+        returnGeometry: false,
+      }),
+    )
+    .then((result) => {
+      onZipsReady?.(result.features.map((f) => f.attributes));
     })
     .catch((error) => {
-      console.error("Failed to load ZIP code data:", error);
+      console.error("Failed to load the ZIP code layer:", error);
     });
 
   view.on("click", async (event) => {
@@ -201,24 +203,38 @@ export function initMapView(container, { onLayerReady, onTractClick, onZipsReady
      */
     selectZip(zip) {
       if (zip === selectedZip) return;
-      const geometry = zip ? zipGeometries.get(zip) : null;
-      if (zip && !geometry) return; // ZIP data not loaded yet
       selectedZip = zip;
 
       if (zipGraphic) view.graphics.remove(zipGraphic);
       zipGraphic = null;
-      if (!geometry) return;
+      if (!zip) return;
 
-      zipGraphic = new Graphic({
-        geometry: toEsriPolygon(geometry),
-        symbol: {
-          type: "simple-fill",
-          color: [0, 0, 0, 0],
-          outline: { color: BRAND.orange, width: 3.5 },
-        },
-      });
-      view.graphics.add(zipGraphic);
-      view.goTo(zipGraphic.geometry.extent.clone().expand(1.4)).catch(() => {});
+      zipLayerReady
+        .then(() => {
+          return zipLayer.queryFeatures({
+            where: `${ZIP_FIELD} = ${zipLiteral(zip)}`,
+            returnGeometry: true,
+            outSpatialReference: view.spatialReference,
+          });
+        })
+        .then((result) => {
+          const geometry = result.features[0]?.geometry;
+          // Skip if the selection moved on while the query was in flight.
+          if (!geometry || zip !== selectedZip) return;
+          zipGraphic = new Graphic({
+            geometry,
+            symbol: {
+              type: "simple-fill",
+              color: [0, 0, 0, 0],
+              outline: { color: BRAND.orange, width: 3.5 },
+            },
+          });
+          view.graphics.add(zipGraphic);
+          view.goTo(geometry.extent.clone().expand(1.4)).catch(() => {});
+        })
+        .catch((error) => {
+          console.error(`Failed to load the outline for ZIP ${zip}:`, error);
+        });
     },
     /** Clear the map highlight when the panel is closed without a new tract click. */
     clearHighlight() {

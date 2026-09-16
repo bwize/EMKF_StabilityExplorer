@@ -11,7 +11,7 @@ import { SplashScreen } from "./components/splashScreen.js";
 import { ZipPicker } from "./components/zipPicker.js";
 
 import { FIELD_META } from "./config/fieldMeta.js";
-import { EXCLUDE_FIELD_CANDIDATES } from "./config/appConfig.js";
+import { EXCLUDE_FIELD_CANDIDATES, ZIP_FIELD } from "./config/appConfig.js";
 import {
   MOBILITY_FIELD,
   MOBILITY_GROUP,
@@ -156,14 +156,11 @@ function render() {
   map.selectZip(state.selectedZip);
 
   // ZIP records carry the same fields as tracts (01_acs_tracts.py builds both),
-  // minus anything tract-only. Keys are unioned because a ZIP with no ACS rows
-  // has only its ZIP property. Ranked among ZIPs, not tracts — see TractPanel.
-  const zipFieldNames = state.zipRecords
-    ? [...new Set(state.zipRecords.flatMap((r) => Object.keys(r)))]
-    : [];
+  // minus anything tract-only. Ranked among ZIPs, not tracts — see TractPanel.
+  const zipFieldNames = state.zipRecords?.length ? Object.keys(state.zipRecords[0]) : [];
   const zipExcludeFieldName = findField(zipFieldNames, EXCLUDE_FIELD_CANDIDATES);
   const zipRecord = state.selectedZip
-    ? state.zipRecords?.find((r) => String(r.ZIP) === state.selectedZip) ?? null
+    ? state.zipRecords?.find((r) => String(r[ZIP_FIELD]) === state.selectedZip) ?? null
     : null;
   const zipStats = zipRecord
     ? computeAllFieldStats(state.zipRecords, activeFieldIds, zipExcludeFieldName)
@@ -198,7 +195,7 @@ function render() {
             { class: "zip-controls" },
             state.zipRecords &&
               ZipPicker({
-                zips: state.zipRecords.map((r) => String(r.ZIP)).sort(),
+                zips: state.zipRecords.map((r) => String(r[ZIP_FIELD])).sort(),
                 value: state.selectedZip,
                 // A new ZIP replaces any tract in the detail panel.
                 onChange: (zip) => setState({ selectedZip: zip, selectedTract: null }),
@@ -223,7 +220,7 @@ function render() {
     !state.selectedTract && zipRecord
       ? TractPanel({
           tract: zipRecord,
-          place: { heading: `ZIP ${zipRecord.ZIP}`, description: "ZIP Code Tabulation Area", unit: "ZIP codes" },
+          place: { heading: `ZIP ${zipRecord[ZIP_FIELD]}`, description: "ZIP Code Tabulation Area", unit: "ZIP codes" },
           groupedFields,
           fieldStats: zipStats,
           excludeFieldName: zipExcludeFieldName,

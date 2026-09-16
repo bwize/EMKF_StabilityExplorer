@@ -513,6 +513,24 @@ COLUMN_GROUPS = {
     "single_parent_child_under6": [
         "B11003_011E", "B11003_012E", "B11003_017E", "B11003_018E",
     ],
+
+    # --- Age bands, male + female (B01001) ---------------------------------
+    # Male lines 003-025, female lines 027-049 (male + 24). ACS splits some
+    # ranges finer than these bands (15-17 / 18-19, 20 / 21 / 22-24,
+    # 60-61 / 62-64, 65-66 / 67-69 / 70-74), so those lines are summed.
+    "age_under5": ["B01001_003E", "B01001_027E"],
+    "age_5_9": ["B01001_004E", "B01001_028E"],
+    "age_10_14": ["B01001_005E", "B01001_029E"],
+    "age_15_19": ["B01001_006E", "B01001_007E", "B01001_030E", "B01001_031E"],
+    "age_20_24": ["B01001_008E", "B01001_009E", "B01001_010E", "B01001_032E", "B01001_033E", "B01001_034E"],
+    "age_25_34": ["B01001_011E", "B01001_012E", "B01001_035E", "B01001_036E"],
+    "age_35_44": ["B01001_013E", "B01001_014E", "B01001_037E", "B01001_038E"],
+    "age_45_54": ["B01001_015E", "B01001_016E", "B01001_039E", "B01001_040E"],
+    "age_55_59": ["B01001_017E", "B01001_041E"],
+    "age_60_64": ["B01001_018E", "B01001_019E", "B01001_042E", "B01001_043E"],
+    "age_65_74": ["B01001_020E", "B01001_021E", "B01001_022E", "B01001_044E", "B01001_045E", "B01001_046E"],
+    "age_75_84": ["B01001_023E", "B01001_024E", "B01001_047E", "B01001_048E"],
+    "age_85plus": ["B01001_025E", "B01001_049E"],
 }
 
 # Keep every downloaded column, not just the renamed/grouped ones. Useful when
@@ -765,6 +783,23 @@ RATES = {
         ["limited_english_hh"],
         ["language_hh_universe"],
     ),
+
+    # --- Age structure ----------------------------------------------------
+    # Context, not vulnerability: shares of total population by age band.
+    # The bands sum to 100%.
+    "pct_age_under5": (["age_under5"], ["total_population"]),
+    "pct_age_5_9": (["age_5_9"], ["total_population"]),
+    "pct_age_10_14": (["age_10_14"], ["total_population"]),
+    "pct_age_15_19": (["age_15_19"], ["total_population"]),
+    "pct_age_20_24": (["age_20_24"], ["total_population"]),
+    "pct_age_25_34": (["age_25_34"], ["total_population"]),
+    "pct_age_35_44": (["age_35_44"], ["total_population"]),
+    "pct_age_45_54": (["age_45_54"], ["total_population"]),
+    "pct_age_55_59": (["age_55_59"], ["total_population"]),
+    "pct_age_60_64": (["age_60_64"], ["total_population"]),
+    "pct_age_65_74": (["age_65_74"], ["total_population"]),
+    "pct_age_75_84": (["age_75_84"], ["total_population"]),
+    "pct_age_85plus": (["age_85plus"], ["total_population"]),
 }
 
 # Express rates as 0–100 instead of 0–1.
