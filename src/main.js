@@ -49,7 +49,7 @@ const mapContainer = el("div", { class: "map-view" });
 const tractPanelSlot = el("calcite-shell-panel", {
   slot: "panel-end",
   position: "end",
-  widthScale: "m",
+  widthScale: "l",
   displayMode: "dock",
 });
 

@@ -157,7 +157,17 @@ export function initMapView(container, { onLayerReady, onTractClick, onZipsReady
       }),
     )
     .then((result) => {
-      onZipsReady?.(result.features.map((f) => f.attributes));
+      // Filtered again here, by plain string comparison, in case the server
+      // compared the layer filter differently (a number field, stray spaces).
+      const hidden = new Set(HIDDEN_ZIPS);
+      const records = result.features
+        .map((f) => f.attributes)
+        .filter((r) => !hidden.has(String(r[ZIP_FIELD] ?? "").trim()));
+      const leaked = result.features.length - records.length;
+      if (leaked > 0) {
+        console.warn(`${leaked} hidden ZIP(s) got past the layer filter:`, zipLayer.definitionExpression);
+      }
+      onZipsReady?.(records);
     })
     .catch((error) => {
       console.error("Failed to load the ZIP code layer:", error);

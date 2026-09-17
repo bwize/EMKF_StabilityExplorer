@@ -83,7 +83,7 @@ export function TractPanel({
   if (!tract) {
     return el(
       "calcite-panel",
-      { heading: "Tract detail", class: "tract-panel tract-panel-empty" },
+      { heading: "Tract detail", scale: "l", class: "tract-panel tract-panel-empty" },
       el(
         "div",
         { class: "tract-panel-placeholder" },
@@ -106,7 +106,7 @@ export function TractPanel({
   if (isExcluded(tract, excludeFieldName)) {
     return el(
       "calcite-panel",
-      { heading, description, class: "tract-panel" },
+      { heading, description, scale: "l", class: "tract-panel" },
       el("calcite-action", { icon: "x", text: "Close", slot: "header-actions-end", onClick: onClose }),
       el(
         "div",
@@ -114,7 +114,7 @@ export function TractPanel({
         MobilityBadge({ tract, mobilityFieldName }),
         el(
           "calcite-notice",
-          { open: true, icon: "exclamation-mark-triangle", kind: "warning", scale: "s" },
+          { open: true, icon: "exclamation-mark-triangle", kind: "warning", scale: "m" },
           el("div", { slot: "title" }, `Small sample size — ${unitSingular} excluded`),
           el(
             "div",
@@ -158,7 +158,7 @@ export function TractPanel({
 
   return el(
     "calcite-panel",
-    { heading, description, class: "tract-panel" },
+    { heading, description, scale: "l", class: "tract-panel" },
     el("calcite-action", { icon: "x", text: "Close", slot: "header-actions-end", onClick: onClose }),
 
     el(
@@ -177,7 +177,7 @@ export function TractPanel({
         el(
           "p",
           { class: "tract-panel-hint" },
-          el("calcite-icon", { icon: "flag", scale: "s", class: "flag-icon" }),
+          el("calcite-icon", { icon: "flag", scale: "m", class: "flag-icon" }),
           flaggedCount === 0
             ? ` No indicators in the worst 10% of ${unit} region-wide.`
             : ` ${flaggedCount} indicator${flaggedCount === 1 ? "" : "s"} in the worst 10% of ${unit} region-wide.`,
@@ -206,7 +206,7 @@ export function TractPanel({
                 el(
                   "span",
                   { class: "indicator-row-value" },
-                  el("calcite-icon", { icon: "flag", scale: "s", class: "flag-icon" }),
+                  el("calcite-icon", { icon: "flag", scale: "m", class: "flag-icon" }),
                   formatPercent(value),
                   rank !== null && el("span", { class: "indicator-row-rank" }, `(${formatOrdinal(rank)} percentile)`),
                 ),
