@@ -1,4 +1,5 @@
 import { el } from "../dom.js";
+import { tipAttrs } from "../lib/tooltips.js";
 import { describeTract } from "../lib/geoid.js";
 import { isFlagged, vulnerabilityPercentile, isExcluded } from "../lib/stats.js";
 import { formatPercent, formatCount, formatOrdinal } from "../lib/format.js";
@@ -24,7 +25,11 @@ function MobilityBadge({ tract, mobilityFieldName }) {
 
   return el(
     "div",
-    { class: "mobility-badge", title: MOBILITY_META.description },
+    {
+      class: "mobility-badge",
+      tabindex: "0",
+      ...tipAttrs({ title: MOBILITY_META.label, body: MOBILITY_META.description, placement: "left" }),
+    },
     el("span", {
       // An unrecognized category has no fill color of its own and falls back
       // to the neutral swatch the stylesheet gives an uncolored one.
@@ -40,6 +45,20 @@ function MobilityBadge({ tract, mobilityFieldName }) {
   );
 }
 
+/**
+ * Tooltip for one indicator row: the full plain-language definition, closed
+ * by how this tract or ZIP ranks on it. Opens to the left, over the map,
+ * rather than covering the neighboring rows.
+ */
+function indicatorTip(meta, rankNote) {
+  return tipAttrs({
+    title: meta.label,
+    body: meta.tooltip ?? meta.description,
+    note: rankNote,
+    placement: "left",
+  });
+}
+
 /** The summary strip (counts and shares) shown for every tract, screened out or not. */
 function TractSummary({ tract }) {
   return el(
@@ -48,7 +67,7 @@ function TractSummary({ tract }) {
     SUMMARY_FIELDS.map(({ label, description, format, value }) =>
       el(
         "div",
-        { class: "tract-summary-stat", title: description },
+        { class: "tract-summary-stat", tabindex: "0", ...tipAttrs({ title: label, body: description, placement: "left" }) },
         el(
           "span",
           { class: "tract-summary-value" },
@@ -192,10 +211,8 @@ export function TractPanel({
                 "div",
                 {
                   class: "indicator-row is-flagged",
-                  title:
-                    rank === null
-                      ? meta.description
-                      : `${meta.description} Only ${rank}% of ${unit} region-wide are as badly off or worse.`,
+                  tabindex: "0",
+                  ...indicatorTip(meta, rank === null ? null : `Only ${rank}% of ${unit} in the region are as badly off or worse.`),
                 },
                 el(
                   "span",
@@ -243,10 +260,8 @@ export function TractPanel({
                   "div",
                   {
                     class: "indicator-row",
-                    title:
-                      rank === null
-                        ? meta.description
-                        : `${meta.description} ${rank}% of ${unit} region-wide are as badly off or worse.`,
+                    tabindex: "0",
+                    ...indicatorTip(meta, rank === null ? null : `${rank}% of ${unit} in the region are as badly off or worse.`),
                   },
                   el("span", { class: "indicator-row-label" }, meta.label),
                   el(

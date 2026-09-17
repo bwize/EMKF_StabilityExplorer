@@ -9,6 +9,10 @@
 // fields on the live FeatureLayer (see lib/layerFields.js), so it's safe to
 // keep every indicator listed here even before the layer has all of them.
 //
+// description: one line, shown under the indicator picker in the left panel.
+// tooltip: optional fuller, plain-language definition for the tooltips on the
+//   tract panel rows and the picker's info icon; falls back to description.
+//
 // direction:
 //   "high"  -> a HIGH value is the vulnerable/worse end (flag the top decile)
 //   "low"   -> a LOW value is the vulnerable/worse end (flag the bottom decile)
@@ -81,6 +85,8 @@ export const FIELD_META = {
     label: "Cost-Burdened Households",
     group: "Housing",
     direction: "high",
+    tooltip:
+      "Households whose housing costs take 30% or more of their income. For renters, costs are rent plus utilities; for homeowners, mortgage payments, property taxes, insurance, and utilities. 30% is the federal (HUD) benchmark for affordable housing — above it, less is left over for food, transportation, childcare, and savings.",
     description: "Renters and owners spending 30%+ of income on housing.",
   },
   // pct_rent_burden: {
@@ -93,6 +99,8 @@ export const FIELD_META = {
     label: "Severely Cost-Burdened Households",
     group: "Housing",
     direction: "high",
+    tooltip:
+      "Households whose housing costs take half or more of their income — renters and homeowners alike. At this level, one unexpected bill, a cut in work hours, or a rent increase can put a household at risk of falling behind or losing its home.",
     description: "Renters and owners spending 50%+ of income on housing.",
   },
   // pct_lowinc_cost_burden: {
@@ -106,6 +114,8 @@ export const FIELD_META = {
     label: "Share of All Households Low-Income & Burdened",
     group: "Housing",
     direction: "high",
+    tooltip:
+      "The share of ALL households in the area that both earn under $35,000 a year and spend 30% or more of that income on housing. Nearly every low-income household is cost-burdened, so this measure instead shows how much of the neighborhood as a whole is caught in that squeeze.",
     description:
       "Of ALL households in the tract, the share that are both under $35k and cost-burdened.",
   },
@@ -119,12 +129,16 @@ export const FIELD_META = {
     label: "Vacant Housing Units",
     group: "Housing",
     direction: "high",
+    tooltip:
+      "Housing units with no one living in them when surveyed, as a share of all units. Includes homes for rent or for sale, seasonal homes, and 'other' vacancies such as abandoned or boarded-up properties. High vacancy can signal disinvestment, though it can also reflect turnover or new construction.",
     description: "Share of all housing units that are vacant.",
   },
   pct_severe_overcrowded: {
     label: "Severely Overcrowded Households",
     group: "Housing",
     direction: "high",
+    tooltip:
+      "Occupied homes with more than 1.5 people per room — for example, 7 people in a 4-room home. Rooms include bedrooms, living rooms, and kitchens, but not bathrooms or hallways. Severe overcrowding often means families are doubling up because they can't afford a place of their own.",
     description: "More than 1.5 occupants per room.",
   },
   // Shelved for now. Not an ACS measure — 01_acs_tracts.py joins it from
@@ -144,12 +158,16 @@ export const FIELD_META = {
     label: "Unemployment Rate (Prime-Age 25–54)",
     group: "Economic Security",
     direction: "high",
+    tooltip:
+      "Of adults ages 25–54 who are working or actively looking for work, the share who are jobless and looking. Limiting it to prime working age keeps students and retirees from skewing the rate, so it better reflects access to jobs.",
     description: "Unemployment rate restricted to the prime working-age population — not distorted by retirees.",
   },
   pct_prime_lfp: {
     label: "Labor Force Participation (Prime-Age)",
     group: "Economic Security",
     direction: "low",
+    tooltip:
+      "The share of all adults ages 25–54 who are working or actively looking for work. Unlike the unemployment rate, it also captures people who have stopped looking — because of disability, caregiving, discouragement, or other barriers. Lower values are the more vulnerable end.",
     description: "Labor force participation restricted to ages 25–54.",
   },
   // pct_unemployed: {
@@ -181,6 +199,8 @@ export const FIELD_META = {
     label: "SNAP / Public Assistance Households",
     group: "Economic Security",
     direction: "high",
+    tooltip:
+      "Households that received SNAP (food stamp) benefits or cash public assistance, such as TANF, at any point in the past 12 months. Does not include Supplemental Security Income (SSI), housing assistance, or Medicaid.",
     description: "Households receiving SNAP benefits or public cash assistance.",
   },
   // Denominator is families *with children*, not all families — a tract full of
@@ -192,6 +212,8 @@ export const FIELD_META = {
     label: "Single-Parent Families",
     group: "Economic Security",
     direction: "high",
+    tooltip:
+      "Of families raising their own children under 18, the share headed by one parent with no spouse present (there may still be an unmarried partner in the home). Families where grandparents or other relatives are raising the children aren't counted. Single-parent families more often rely on one income and have less flexibility around childcare and work.",
     description:
       "Of families with children under 18, the share headed by one parent with no spouse present.",
   },
@@ -201,6 +223,8 @@ export const FIELD_META = {
     label: "Renters Who Moved In (Past Year)",
     group: "Mobility & Residential Churn",
     direction: "high",
+    tooltip:
+      "Of renter households, the share that moved into their current home in the most recent period the survey reports (2023 or later in this data release). Frequent turnover among renters can reflect evictions, rent increases, or other forced moves.",
     description: "Renter households that moved into their current unit in the past year.",
   },
   // pct_renter_moved_5yr: {
@@ -219,12 +243,16 @@ export const FIELD_META = {
     label: "Moved Within County (Past Year)",
     group: "Mobility & Residential Churn",
     direction: "high",
+    tooltip:
+      "Residents (age 1 and older) who lived in a different home in the same county one year earlier. Short-distance moves are more often driven by housing problems — an eviction, a rent increase, or poor conditions — while long-distance moves are more often for a new job or school.",
     description: "Residents whose move in the past year was local (same county).",
   },
   pct_no_vehicle: {
     label: "No Vehicle Access",
     group: "Mobility & Residential Churn",
     direction: "high",
+    tooltip:
+      "Occupied homes (renters and owners) with no car, truck, or van available to anyone in the household. With limited public transit across most of the region, going without a vehicle makes it much harder to reach jobs, groceries, childcare, and healthcare.",
     description: "Occupied households with no vehicle available.",
   },
   // pct_commute_gt45: {
@@ -237,6 +265,8 @@ export const FIELD_META = {
     label: "Commute 15+ Minutes",
     group: "Mobility & Residential Churn",
     direction: "high",
+    tooltip:
+      "Workers age 16 and older whose one-way trip to work usually takes 15 minutes or more. People who work from home aren't counted. Longer commutes cost time and money and can signal distance from job centers.",
     description: "Workers 16+ with a one-way commute of 15 minutes or more.",
   },
 
@@ -245,6 +275,8 @@ export const FIELD_META = {
     label: "No High School Diploma (25+)",
     group: "Education & Access",
     direction: "high",
+    tooltip:
+      "Adults age 25 and older who have not completed high school or earned an equivalent credential such as a GED. A diploma is a baseline requirement for many jobs and for most job-training and college programs.",
     description: "Population 25+ without a high school diploma or equivalent.",
   },
   // pct_bachelors_plus: {
@@ -257,12 +289,16 @@ export const FIELD_META = {
     label: "No Internet Access",
     group: "Education & Access",
     direction: "high",
+    tooltip:
+      "Households with no internet access at home of any kind — no paid subscription (broadband, cellular data plan, satellite, or dial-up) and no free service. Without it, applying for jobs, doing homework, seeing a doctor online, and reaching public services all get harder.",
     description: "Households with no internet subscription of any kind.",
   },
   pct_limited_english: {
     label: "Limited English-Speaking Households",
     group: "Education & Access",
     direction: "high",
+    tooltip:
+      "Households where no one age 14 or older speaks only English or speaks English \"very well.\" The Census Bureau calls these limited English-speaking households; they may need language support to navigate schools, healthcare, and government services.",
     description: "Households where no member 14+ speaks English \"very well.\"",
   },
 

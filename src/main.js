@@ -1,6 +1,7 @@
 import { el, mount } from "./dom.js";
 import { state, setState, subscribe } from "./state.js";
 import { initMapView } from "./mapView.js";
+import { initTooltips, hideTooltips, tipAttrs } from "./lib/tooltips.js";
 
 import { Header } from "./components/header.js";
 import { IndicatorPicker } from "./components/indicatorPicker.js";
@@ -72,6 +73,7 @@ mount(
 // Outside the shell so render()'s remounts never touch it; it removes itself
 // once dismissed.
 document.body.append(SplashScreen());
+initTooltips();
 
 const map = initMapView(mapContainer, {
   onLayerReady: ({ fieldNames, records }) => {
@@ -105,6 +107,7 @@ render();
 // setState() — cheap at this app's scale (a few hundred tract records, a
 // couple dozen indicators).
 function render() {
+  hideTooltips();
   document.documentElement.classList.toggle("calcite-mode-dark", state.darkMode);
   darkModeSwitch.checked = state.darkMode;
 
@@ -184,7 +187,23 @@ function render() {
               value: state.activeFieldId,
               onChange: (id) => setState({ activeFieldId: id }),
             }),
-          currentMeta && el("p", { class: "indicator-description" }, currentMeta.description),
+          currentMeta &&
+            el(
+              "p",
+              { class: "indicator-description" },
+              currentMeta.description,
+              // The fuller definition, when there is one, behind an info icon
+              // rather than inline: the one-liner is enough to read the map.
+              currentMeta.tooltip &&
+                el("calcite-icon", {
+                  icon: "information",
+                  scale: "s",
+                  class: "info-icon",
+                  tabindex: "0",
+                  "aria-label": `About ${currentMeta.label}`,
+                  ...tipAttrs({ title: currentMeta.label, body: currentMeta.tooltip, placement: "right" }),
+                }),
+            ),
           Legend({
             breaks: rendererInfo?.breaks,
             direction: currentMeta?.direction,
